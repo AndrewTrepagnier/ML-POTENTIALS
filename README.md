@@ -41,7 +41,51 @@ For a given system of atoms, there exisit an equilibrium distance, re, in which 
 
  - Input_parser 
 
- - Dump_parser 
+ - Dump_parser
+   A typical dump file will have hundreds of recursive items that look something like this:
+
+           Typical LAMMPS dump item should look like this, if not the parsing algorithms will be incorrect:
+
+        ITEM: TIMESTEP energy, energy_weight, force_weight, nsims
+        1        -199944.4130284513230436    1    1   88
+        ITEM: NUMBER OF ATOMS
+        52        
+        ITEM: BOX BOUNDS xy xz yz pp pp pp
+        -6.6599068561068142     10.6426540787132993     -5.7964044747763319
+        -1.5903743695984427      8.9256853388485613     -0.8635023813304824
+        0.0000000000000000     16.3996700907443120     -1.5903743695984427
+        ITEM: ATOMS id type x y z
+        1      1          1.5004620351452496     0.5243795304393224     3.8834927664029966
+        2      1         -0.4657385064656120     1.2308782860044023     7.0568980742855700
+        3      1          1.2745152962579427     0.0833213387822464     9.3340024694978840
+        .       .           .
+        .       .           .
+        .       .           .
+        52     1          4.0887810494581123     5.4317594751390095    15.0272327985735377
+
+    
+        """
+
+   - The dump_parser opens all of the dump files within the folder and parses through the files to save the following data:
+   - number of atoms in the simulation(in the example above, 52)
+   - a vector of the coordinate positions of all atoms within that simulation snapshot(item)
+   - energy for each snapshot(what the network will be predicting)
+   - positions = [x0, y0, z0;
+                   x1, y1, z1;
+                     ...;
+                     x51, y51, z51]
+   - Then a distance matrix is generated that describes the radial displacement between atom i and atom j = 1 through 51. Since the displacement between i = j will always be zero(since it is the same atom), this instance is skipped. This matrix can be visualized as such, where element[i][j] indicates the euclidean distance between atom i and atom j:
+  
+   - 
+                    atom0   atom1   atom2   ....
+
+            atom0   i=j=None  [0][1]  [0][2] 
+
+            atom1   [1][0]   i=j=None   [1][2]
+
+            atom2   .           .           .
+
+     
 
 
 
