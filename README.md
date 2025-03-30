@@ -2,7 +2,7 @@
 
 ***What is an interatomic potential?***
 
-Interatomic potentials (or "potentials" for short) of a system of atoms/molecules are mathematical representations of the energy stored within that system of atoms. You can imagine a simple system of atoms would look something like this:
+The interatomic potential (or "potentials" for short) of a system of atoms/molecules is a mathematical representations of the energy stored within that system of atoms. You can imagine a simple system of atoms would look something like this:
 
 ![Untitled video - Made with Clipchamp (1)](https://github.com/user-attachments/assets/42e418b7-51c1-460e-a945-0e9c1a37c531)
 
