@@ -10,7 +10,7 @@ Imagine if each of these atoms where small masses and they each had springs atta
 
 ## Project Description
 
-Material Scientist need some type of way to produce an interatomic potential of the alloy or element they are studying. These potentials are used as inputs into molecular dynamics simulations like Large Scale Atomic/Molecularly Massive Parallel Simulator (LAMMPS) so they study the subtle behaviors of these systems when they are subjected to things like temperature changes, stresses, and strains. Using machine learning to make accurate potentials isn't something very new. Matter of fact, it has been becoming increasingly popular over the past decade with many researchers authoring their own models and preprocessing techniques like the Behler–Parrinello approach[1] and Specral Neighbor Analysis Method(SNAP)[2]. 
+Material Scientist need some type of way to produce an interatomic potential of the alloy or element they are studying. These potentials are used as inputs into molecular dynamics simulations like Large Scale Atomic/Molecularly Massive Parallel Simulator (LAMMPS) so they study the subtle behaviors of these systems when they are subjected to things like temperature changes, stresses, and strains. Using machine learning to make accurate potentials isn't something very new. Matter of fact, it has been becoming increasingly popular over the past decade with many researchers authoring their own models and preprocessing techniques like the Behler–Parrinello approach[1] and Specral Neighbor Analysis Method(SNAP)[2]. In this project, a pytorch neural network model is trained over a Density Functional Theory(DFT) database with two structural fingerprints embedded in the input layer for computational efficiency. 
 
 
 
