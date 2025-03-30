@@ -8,12 +8,40 @@ The interatomic potential (or "potentials" for short) of a system of atoms/molec
 
 Imagine if each of these atoms where small masses and they each had springs attaching to the other atoms in the system. If you were to volumetrically strain the box, then energy would become stored in the springs. The potential describes these energies with a mathematical function. 
 
-***Project Description***
+## Project Description
 
 Material Scientist need some type of way to produce an interatomic potential of the alloy or element they are studying. These potentials are used as inputs into molecular dynamics simulations like Large Scale Atomic/Molecularly Massive Parallel Simulator (LAMMPS) so they study the subtle behaviors of these systems when they are subjected to things like temperature changes, stresses, and strains. Using machine learning to make accurate potentials isn't something very new. Matter of fact, it has been becoming increasingly popular over the past decade with many researchers authoring their own models and preprocessing techniques like the Behler–Parrinello approach[1] and Specral Neighbor Analysis Method(SNAP)[2]. 
 
 
 
+## Codebase Breakdown
+**Basic overview of code** 
+
+Fingerprint_radial.py is a pythonic version of the fingerprint_radial.cpp file. The purpose of this transcription is to make a Pytorch implementation to reach larger audiences whole are more comfortable with machine learning in python than cpp.  
+ 
+
+Each class has a single, well defined responsibility within this file. Parameters are group logically, such that all metaparameters of the network(re, rc, dr, ect.) are within RadialParameters, and all atomic system configuration characteristics (number of atoms, atom positions, etc.) are within the AtomicSystem class.   
+ 
+
+**RadialParameters**
+
+Designed for user readability. It describes the parameter types that will be saved and validated. These values will be found through the input_parser function in section XXX. 
+
+For a given system of atoms, there exisit an equilibrium distance, re, in which a pair of atoms will stabilize at. You can think of this like two masses connected by a spring. If the spring is stretched or compressed from equilibrium point, then there will be energy stored within the spring. The radial cutoff distance, rc, is the radial distance from an atom in which neighbors outside of this region have negligible effect on the atom, and vise versa within the cutoff radius. This parameter is dictated by the specific characteristics of the atom/molecule being studied. A special cutoff radius function is implemented within the Fingerprint_radial class to account for a smooth, continuous cutoff radius description. 
+
+  
+
+**AtomicSystem** 
+
+ 
+
+**Fingerprint_radial** 
+
+ - Initiaialization 
+
+ - Input_parser 
+
+ - Dump_parser 
 
 
 
