@@ -1,58 +1,76 @@
 # Machine-learned Interatomic Potential with Pytorch🧠
 
-***What is an interatomic potential?***
+**What *is* an interatomic potential?**
 
-The interatomic potential (or "potentials" for short) of a system of atoms/molecules is a mathematical representations of the energy stored within that system of atoms. You can imagine a simple system of atoms would look something like this:
+An interatomic potential is a mathematical function that describes the energy stored within a system of atoms or molecules based on their positions. You can think of it like this:
+
+Imagine a box filled with atoms, where each atom is connected to others by springs. If you stretch or compress the box, the springs stretch or compress too, storing energy. That stored energy is described by the interatomic potential.
+
+Here's a helpful visualization:
 
 ![Untitled video - Made with Clipchamp (1)](https://github.com/user-attachments/assets/42e418b7-51c1-460e-a945-0e9c1a37c531)
 
-Imagine if each of these atoms where small masses and they each had springs attaching to the other atoms in the system. If you were to volumetrically strain the box, then energy would become stored in the springs. The potential describes these energies with a mathematical function. 
-
 ## Project Description
 
-Material Scientist need some type of way to produce an interatomic potential of the alloy or element they are studying. Potentials can act as inputs for molecular dynamics such as Large Scale Atomic/Molecularly Massive Parallel Simulator (LAMMPS) or VASP. In doing so, we are able to study the behaviors of these systems of atoms under various conditions such as temperature changes and volumetric stresses and strains. However, the quailty of these simulations are dependent on the quality of the interatomic potential used. Over the past two decades, machine learning has become a useful technique in producing highly accurate potentials. Some recent approaches have become increasingly popular for their accuracy and effienciency such as the Behler–Parrinello approach[1] and Specral Neighbor Analysis Method(SNAP)[2]. In this project, a pytorch neural network model is trained over a Density Functional Theory(DFT) database with two structural fingerprints embedded in the input layer for computational efficiency. 
+Materials scientists rely on interatomic potentials to simulate the physical behavior of materials under various conditions—such as changes in temperature, pressure, or mechanical stress. These simulations are typically run using tools like LAMMPS or VASP, but the accuracy of the results is entirely dependent on the quality of the potential being used.
 
+Traditional hand-tuned potentials often struggle to match the complexity of real-world materials. That’s where machine learning comes in.
+
+This project uses PyTorch to build a machine-learned interatomic potential (MLIP), trained on Density Functional Theory (DFT) data. The model leverages two structural fingerprints in its input layer to maintain both efficiency and accuracy.
+
+Notable inspirations include:
+
+- The Behler–Parrinello Neural Network [1]
+- The Spectral Neighbor Analysis Method (SNAP) [2]
+
+## Why does it matter?
+
+Machine-learned potentials like this one are transforming how we simulate and understand materials. By combining physics-based insight with deep learning, we can:
+
+- Dramatically improve simulation accuracy
+- Customize models for specific materials
+- Enable discovery of new alloys or molecular behaviors
+  
+This project aims to make these advanced tools more accessible to researchers and engineers—especially those already comfortable in the Python and PyTorch ecosystems.
 
 
 ## Codebase Breakdown
-**Basic overview of code** 
 
-Fingerprint_radial.py is a pythonic version of the fingerprint_radial.cpp file. The purpose of this transcription is to make a Pytorch implementation to reach larger audiences whole are more comfortable with machine learning in python than cpp.  
- 
+The main goal of this codebase is to provide a clean, Pythonic implementation of the MLIP framework using PyTorch—built to be approachable by Python-based ML researchers and materials scientists.
 
-Each class has a single, well defined responsibility within this file. Parameters are group logically, such that all metaparameters of the network(re, rc, dr, ect.) are within RadialParameters, and all atomic system configuration characteristics (number of atoms, atom positions, etc.) are within the AtomicSystem class.   
- 
-
+### Fingerprint_radial.py
 **RadialParameters**
+This file is a full transcription of fingerprint_radial.cpp, reimagined in Python. Each class serves a single, clear purpose.
 
-Designed for user readability. It describes the parameter types that will be saved and validated. These values will be found through the input_parser function in section XXX. 
+RadialParameters
 
-For a given system of atoms, there exisit an equilibrium distance, re, in which a pair of atoms will stabilize at. You can think of this like two masses connected by a spring. If the spring is stretched or compressed from equilibrium point, then there will be energy stored within the spring. The radial cutoff distance, rc, is the radial distance from an atom in which neighbors outside of this region have negligible effect on the atom, and vise versa within the cutoff radius. This parameter is dictated by the specific characteristics of the atom/molecule being studied. A special cutoff radius function is implemented within the Fingerprint_radial class to account for a smooth, continuous cutoff radius description. 
+This class contains all the meta-parameters needed to compute structural fingerprints:
 
+- re: Equilibrium bond distance where atomic forces balance.
+- rc: Cutoff radius—atoms beyond this distance don’t meaningfully affect a given atom.
+- dr: A smoothing parameter for the cutoff function.
+- These values are initialized through the input_parser() and grouped for clarity and usability.
+
+**AtomicSystem**
+
+Holds information about the specific atomic configuration:
+
+Number of atoms
+Atomic positions
+Simulation metadata
+This system’s configuration is later used to compute distance matrices and other properties needed to evaluate the potential.
   
+### Dump_parser
 
-**AtomicSystem** 
+The dump_parser() method reads LAMMPS-style dump files and extracts the data required to train the MLIP. Here's what a typical dump item looks like:
 
- 
-
-**Fingerprint_radial** 
-
- - Initiaialization 
-
- - Input_parser 
-
- - Dump_parser
-   A typical dump file will have hundreds of recursive items that look something like this:
-
-           Typical LAMMPS dump item should look like this, if not the parsing algorithms will be incorrect:
-
-        ITEM: TIMESTEP energy, energy_weight, force_weight, nsims
-        1        -199944.4130284513230436    1    1   88
-        ITEM: NUMBER OF ATOMS
-        52        
-        ITEM: BOX BOUNDS xy xz yz pp pp pp
-        -6.6599068561068142     10.6426540787132993     -5.7964044747763319
-        -1.5903743695984427      8.9256853388485613     -0.8635023813304824
+ITEM: TIMESTEP energy, energy_weight, force_weight, nsims
+-        1        -199944.4130284513230436    1    1   88
+-        ITEM: NUMBER OF ATOMS
+-       52        
+-        ITEM: BOX BOUNDS xy xz yz pp pp pp
+       -6.6599068561068142     10.6426540787132993     -5.7964044747763319
+       -1.5903743695984427      8.9256853388485613     -0.8635023813304824
         0.0000000000000000     16.3996700907443120     -1.5903743695984427
         ITEM: ATOMS id type x y z
         1      1          1.5004620351452496     0.5243795304393224     3.8834927664029966
@@ -63,20 +81,13 @@ For a given system of atoms, there exisit an equilibrium distance, re, in which 
         .       .           .
         52     1          4.0887810494581123     5.4317594751390095    15.0272327985735377
 
-    
-        """
 
-   - The dump_parser opens all of the dump files within the folder and parses through the files to save the following data:
+The dump_parser opens all of the dump files within the folder and parses through the files to save the following data:
    - number of atoms in the simulation(in the example above, 52)
    - a vector of the coordinate positions of all atoms within that simulation snapshot(item)
    - energy for each snapshot(what the network will be predicting)
-   - positions = [x0, y0, z0;
-                   x1, y1, z1;
-                     ...;
-                     x51, y51, z51]
    - Then a distance matrix is generated that describes the radial displacement between atom i and atom j = 1 through 51. Since the displacement between i = j will always be zero(since it is the same atom), this instance is skipped. This matrix can be visualized as such, where element[i][j] indicates the euclidean distance between atom i and atom j:
   
-   - 
                     atom0   atom1   atom2   ....
 
             atom0   i=j=None  [0][1]  [0][2] 
@@ -84,7 +95,6 @@ For a given system of atoms, there exisit an equilibrium distance, re, in which 
             atom1   [1][0]   i=j=None   [1][2]
 
             atom2   .           .           .
-
      
 
 
