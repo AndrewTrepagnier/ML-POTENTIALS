@@ -36,6 +36,11 @@ This project aims to make these advanced tools more accessible to researchers an
 
 ## Codebase Breakdown
 
+The Tutorials folder offers the best step-by-step example of fingerprints:
+
+```ML-POTENTIALS/Tutorials/Fingerprint_Tutorial1.ipynb```
+
+
 The main goal of this codebase is to provide a clean, Pythonic implementation of the MLIP framework using PyTorch—built to be approachable by Python-based ML researchers and materials scientists.
 
 ### Fingerprint_radial.py
