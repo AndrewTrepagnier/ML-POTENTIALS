@@ -228,42 +228,43 @@ class Fingerprint_radial:
         Generate interpolation tables of radii and derivatives for computational efficiency.
         
         Returns:
-            tuple: (radial_table, dfctable) containing precomputed values
+            tuple: (r1, radii_table, dfctable) containing precomputed values
         """
         if not self.params:
             raise ValueError("Parameters not initialized. Run input_parser first.")
 
         buffer = 5
         res = 1000
-
-        radial_table = np.zeros(res + buffer)
+    
+        radii_table = np.zeros((res + buffer, int(self.params.n - self.params.o)), dtype=float)  # (1005, n-o)
         dfctable = np.zeros(res + buffer)
-        r1 = np.zeros(res + buffer) #Vector that stores the each radius from 0 to rc with res points inbetween.
+        r1 = np.zeros(res + buffer)
+    
+        for m in range(int(self.params.n - self.params.o)):
+            """
+            Consider m=0 first, compute PI fingerprints for all m=0 and save in the 0th column of radii_table,
+            then increment and fill in next column until all m's are computed and stored
+            """
+            for k in range(res + buffer):
+                r1[k] = self.params.rc * k / res
+                r1_sqrt = np.sqrt(r1[k])
         
-        for k in range(res + buffer):
-            r1[k] = self.params.rc**2 * k/res 
-            r_sqrt = np.sqrt(r1[k])
-            
-            # Once we have our vector of r1 values between 0 and rc, compute radial functions for each m value using the sqrt(r1[k]) value of this each iteration
-            # This function will give an exponential decay component to the radii.
-            for m in range(int(self.params.n - self.params.o)):
-                radial_function = (
-                    (r_sqrt/self.params.re)**(m + self.params.o) * 
-                    np.exp(-self.params.alphak[m] * (r_sqrt/self.params.re)) * 
-                    self.cutoff_function(r_sqrt)
+                term_of_mth_fp = (
+                    (r1_sqrt / self.params.re) ** m *
+                    np.exp(-self.params.alphak[m] * (r1_sqrt / self.params.re)) *
+                    self.cutoff_function(r1_sqrt)
                 )
-                radial_table[k] = radial_function #Think of this as the table of dependent variables to the table of independent variables, r1
+                radii_table[k, m] = term_of_mth_fp
+        
+                if r1_sqrt >= self.params.rc or r1_sqrt <= self.params.rc - self.params.dr:
+                    dfctable[k] = 0
+                else:
+                    term = (self.params.rc - r1_sqrt) / self.params.dr
+                    dfctable[k] = (-8 * (1 - term) ** 3) / (self.params.dr * (1 - term) ** 4)
+    
+        return r1, radii_table, dfctable
 
-            # Compute cutoff function derivatives
-            if r_sqrt >= self.params.rc or r_sqrt <= self.params.rc - self.params.dr:
-                dfctable[k] = 0
-            else:
-                term = (self.params.rc - r_sqrt) / self.params.dr
-                dfctable[k] = (-8 * (1 - term)**3) / (self.params.dr * (1 - term)**4)
-
-        return r1, radial_table, dfctable # Added r1 to the table since this is what each element of the distance matrix will look at first and see where it lies.
-
-    def compute_fingerprint(self, system_index: int = 0) -> np.ndarray:
+    def compute_fingerprint(self, system_index: int = 0) -> tuple[float, ...]:
         """
         Compute fingerprints for a given atomic system using Catmull-Rom spline interpolation.
         
@@ -271,46 +272,35 @@ class Fingerprint_radial:
             system_index (int): Index of the system to compute fingerprints for
             
         Returns:
-            np.ndarray: Computed fingerprints for each atom
+            tuple: (summed_F0, summed_F1, ..., summed_Fm, fingerprints) containing summed fingerprints and individual atom fingerprints
         """
         if not self.systems:
             raise ValueError("No atomic systems loaded. Run dump_parser first.")
         
         system = self.systems[system_index]
-        r1, radial_table, dfctable = self.radii_table()
+        r1, radii_table, dfctable = self.radii_table()
         
         # Initialize fingerprint array
-        n_fingerprints = int(self.params.n - self.params.o)  # Number of radial functions
-        fingerprints = np.zeros((system.num_atoms, n_fingerprints))
+        num_fingerprints = int(self.params.n - self.params.o)
+        fingerprints = np.zeros((system.num_atoms, num_fingerprints), dtype=float)
         
-        # For each atom pair
         for i in range(system.num_atoms):
             for j in range(system.num_atoms):
-                if i != j:  # Skip self-interactions
-                    # Get the distance between atoms i and j
-                    rij = system.distance_matrix[i,j]
+                if i != j:  
+                    rij = system.distance_matrix[i,j]         
+                    idx = np.searchsorted(r1, rij) - 1 
                     
-                    # Find the position in r1 table where this distance fits
-                    # We need 4 points for cubic interpolation
-                    idx = np.searchsorted(r1, rij) - 1
-                    
-                    if idx > 0 and idx < len(r1) - 2:  # Ensure we have points for interpolation
-                        # Get the four points needed for Catmull-Rom
-                        x = [r1[idx-1], r1[idx], r1[idx+1], r1[idx+2]]
+                    if idx > 0 and idx < len(r1) - 2: # Ensure we have points for interpolation
+                        t = (rij - r1[idx]) / (r1[idx+1] - r1[idx]) # Calculate interpolation parameter t
                         
-                        # Calculate interpolation parameter t
-                        t = (rij - r1[idx]) / (r1[idx+1] - r1[idx])
-                        
-                        # For each radial function
-                        for m in range(n_fingerprints):
-                            # Get the four y-values for interpolation
+                        for m in range(num_fingerprints):
                             y = [
-                                radial_table[idx-1],
-                                radial_table[idx],
-                                radial_table[idx+1],
-                                radial_table[idx+2]
+                                radii_table[idx-1, m],
+                                radii_table[idx, m],
+                                radii_table[idx+1, m],
+                                radii_table[idx+2, m]
                             ]
-                            
+
                             # Catmull-Rom interpolation
                             t2 = t * t
                             t3 = t2 * t
@@ -332,8 +322,9 @@ class Fingerprint_radial:
                             # Add contribution to fingerprint
                             fingerprints[i,m] += interpolated_value
         
-        
+        # Calculate sums for each fingerprint type
+        summed_fingerprints = tuple(np.sum(fingerprints[:, m]) for m in range(num_fingerprints))
         system.fingerprints = fingerprints
-        print(f"The pair interaction fingerprint vector is {fingerprints}")
-        return fingerprints
+        
+        return (*summed_fingerprints, fingerprints)
     
