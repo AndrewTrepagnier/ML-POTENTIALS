@@ -1,4 +1,4 @@
-# Machine-learned Interatomic Potential with Pytorch🧠
+# Machine-learned Interatomic Potential with Pytorch - paused development
 
 **What *is* an interatomic potential?**
 
